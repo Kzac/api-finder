@@ -1,6 +1,6 @@
 const config = {
   apiBaseUrl: process.env.NODE_ENV === 'production' 
-    ? 'https://api-finder.vercel.app/api'
+    ? 'https://api-finder.vercel.app'
     : 'http://localhost:5001'
 };
 

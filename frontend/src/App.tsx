@@ -46,6 +46,7 @@ function App() {
     radius: number, 
     coordinates?: [number, number] 
   }) => {
+    console.log('Starting search with params:', params);
     setLoading(true);
     setError(null);
     setLastSearchParams({
@@ -54,28 +55,39 @@ function App() {
       radius: params.radius.toString()
     });
 
+    const searchData = {
+      keyword: params.keyword,
+      city: params.coordinates 
+        ? `${params.city} [${params.coordinates[0].toFixed(6)}, ${params.coordinates[1].toFixed(6)}]`
+        : params.city,
+      radius: params.radius.toString()
+    };
+
+    console.log('Sending search request to:', `${config.apiBaseUrl}/search`);
+    console.log('With data:', searchData);
+
     try {
       const response = await fetch(`${config.apiBaseUrl}/search`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          keyword: params.keyword,
-          city: params.coordinates 
-            ? `${params.city} [${params.coordinates[0].toFixed(6)}, ${params.coordinates[1].toFixed(6)}]`
-            : params.city,
-          radius: params.radius.toString()
-        }),
+        body: JSON.stringify(searchData),
       });
 
+      console.log('Search response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error('Erreur lors de la recherche');
+        const errorText = await response.text();
+        console.error('Search error response:', errorText);
+        throw new Error(`Erreur lors de la recherche: ${errorText}`);
       }
 
       const data = await response.json();
+      console.log('Search results:', data);
       setResults(data);
     } catch (err) {
+      console.error('Search error:', err);
       setError(err instanceof Error ? err.message : 'Une erreur est survenue');
       setResults([]);
     } finally {
