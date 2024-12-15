@@ -162,17 +162,23 @@ def perform_search(keyword, city, radius):
         print(f"Paramètres reçus: keyword='{keyword}', city='{city}', radius='{radius}'")
         return []
 
-@app.route('/suggestions')
+@app.route('/suggestions', methods=['GET', 'POST'])
 def get_suggestions():
     return jsonify(KEYWORD_SUGGESTIONS)
 
-@app.route('/api/recherche-google')
+@app.route('/api/recherche-google', methods=['GET', 'POST'])
 def recherche_google():
     try:
         # Get and validate parameters
-        keyword = request.args.get('keyword', '')
-        city = request.args.get('city', '')
-        radius_km = request.args.get('radius', 5)
+        if request.method == 'POST':
+            data = request.get_json()
+            keyword = data.get('keyword', '')
+            city = data.get('city', '')
+            radius_km = data.get('radius', 5)
+        else:  # GET method
+            keyword = request.args.get('keyword', '')
+            city = request.args.get('city', '')
+            radius_km = int(request.args.get('radius', 5))
         
         print(f"Recherche demandée - Mot-clé: {keyword}, Ville: {city}, Rayon: {radius_km}km")
         
@@ -284,12 +290,16 @@ def recherche_google():
         print(f"Erreur: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/export-csv', methods=['POST'])
+@app.route('/api/export-csv', methods=['GET', 'POST'])
 def export_to_csv():
     try:
-        data = request.get_json()
-        keyword = data.get('keyword', '')
-        selected_results = data.get('results', [])
+        if request.method == 'POST':
+            data = request.get_json()
+            keyword = data.get('keyword', '')
+            selected_results = data.get('results', [])
+        else:  # GET method
+            keyword = request.args.get('keyword', '')
+            selected_results = request.args.get('results', [])
 
         if not selected_results:
             return jsonify({"error": "Aucun résultat sélectionné"}), 400
@@ -330,12 +340,16 @@ def export_to_csv():
         print(f"Erreur lors de l'export CSV: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/export-notion', methods=['POST'])
+@app.route('/api/export-notion', methods=['GET', 'POST'])
 def export_to_notion():
     try:
-        data = request.get_json()
-        keyword = data.get('keyword', '')
-        selected_results = data.get('results', [])
+        if request.method == 'POST':
+            data = request.get_json()
+            keyword = data.get('keyword', '')
+            selected_results = data.get('results', [])
+        else:  # GET method
+            keyword = request.args.get('keyword', '')
+            selected_results = request.args.get('results', [])
 
         if not selected_results:
             return jsonify({"error": "Aucun résultat sélectionné"}), 400
@@ -366,14 +380,20 @@ def export_to_notion():
         print(f"Erreur lors de l'export Notion: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/export-sheets', methods=['POST'])
+@app.route('/api/export-sheets', methods=['GET', 'POST'])
 def export_to_sheets():
     try:
-        data = request.get_json()
-        keyword = data.get('keyword', '')
-        city = data.get('city', '')
-        radius = data.get('radius', '5')
-        selected_results = data.get('results', [])
+        if request.method == 'POST':
+            data = request.get_json()
+            keyword = data.get('keyword', '')
+            city = data.get('city', '')
+            radius = data.get('radius', '5')
+            selected_results = data.get('results', [])
+        else:  # GET method
+            keyword = request.args.get('keyword', '')
+            city = request.args.get('city', '')
+            radius = request.args.get('radius', '5')
+            selected_results = request.args.get('results', [])
 
         if not selected_results:
             return jsonify({"error": "Aucun résultat sélectionné"}), 400
@@ -455,7 +475,7 @@ def export_to_gsheet(data, source):
         print(f"Erreur lors de l'export: {str(e)}")
         return None
 
-@app.route('/api/test-notion')
+@app.route('/api/test-notion', methods=['GET', 'POST'])
 def test_notion():
     try:
         print(f"Test de connexion Notion avec token: {NOTION_TOKEN[:10]}...")
@@ -479,30 +499,19 @@ def test_notion():
             "error": str(e)
         }), 500
 
-@app.route('/search', methods=['POST', 'OPTIONS'])
+@app.route('/search', methods=['GET', 'POST'])
 def search():
-    if request.method == 'OPTIONS':
-        response = make_response()
-        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-        response.headers.add('Access-Control-Allow-Methods', 'POST')
-        return response
-
-    try:
+    if request.method == 'POST':
         data = request.get_json()
         keyword = data.get('keyword', '')
         city = data.get('city', '')
-        radius = data.get('radius', 5)
-        
-        if not keyword or not city:
-            return jsonify({"error": "Keyword and city are required"}), 400
-            
-        results = perform_search(keyword, city, radius)
-        return jsonify(results)
-        
-    except Exception as e:
-        print(f"Error in search: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        radius = data.get('radius', 1000)
+    else:  # GET method
+        keyword = request.args.get('keyword', '')
+        city = request.args.get('city', '')
+        radius = int(request.args.get('radius', 1000))
+    
+    return perform_search(keyword, city, radius)
 
 # Route par défaut qui renvoie un message d'API
 @app.route('/')
