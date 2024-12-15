@@ -63,11 +63,11 @@ function App() {
       radius: params.radius.toString()
     };
 
-    console.log('Sending search request to:', `${config.apiBaseUrl}/search`);
+    console.log('Sending search request to:', 'https://api-finder-j9ra-2lezj0n0u-kzacs-projects.vercel.app/search');
     console.log('With data:', searchData);
 
     try {
-      const response = await fetch(`${config.apiBaseUrl}/search`, {
+      const response = await fetch('https://api-finder-j9ra-2lezj0n0u-kzacs-projects.vercel.app/search', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
