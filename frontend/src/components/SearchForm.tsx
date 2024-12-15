@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { KEYWORD_SUGGESTIONS } from '../constants/suggestions';
 import MapRadius from './MapRadius';
 import Toast from './Toast';
+import config from '../config';
 
 declare global {
   interface Window {
@@ -195,33 +196,76 @@ export const SearchForm: React.FC<SearchFormProps> = ({
     setToast(prev => ({ ...prev, show: false }));
   };
 
-  const handleExportGoogleSheets = async () => {
+  const handleExportToGoogleSheets = async () => {
     try {
-      const selected = results.filter(r => selectedResults.has(r.id));
-      await onExportGoogleSheets(selected);
-      showToast('Export vers Google Sheets réussi !', 'success');
+      const response = await fetch(`${config.apiBaseUrl}/export-to-sheets`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(Array.from(selectedResults).map(id => results.find(r => r.id === id))),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to export to Google Sheets');
+      }
+      
+      showToast('Successfully exported to Google Sheets!', 'success');
     } catch (error) {
-      showToast('Erreur lors de l\'export vers Google Sheets', 'error');
+      console.error('Error exporting to Google Sheets:', error);
+      showToast('Failed to export to Google Sheets', 'error');
     }
   };
 
-  const handleExportCsv = async () => {
+  const handleExportToCsv = async () => {
     try {
-      const selected = results.filter(r => selectedResults.has(r.id));
-      await onExportCsv(selected);
-      showToast('Export CSV réussi !', 'success');
+      const response = await fetch(`${config.apiBaseUrl}/export-to-csv`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(Array.from(selectedResults).map(id => results.find(r => r.id === id))),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to export to CSV');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'recherche_' + new Date().toISOString().slice(0, 10) + '.csv';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      showToast('Successfully exported to CSV!', 'success');
     } catch (error) {
-      showToast('Erreur lors de l\'export CSV', 'error');
+      console.error('Error exporting to CSV:', error);
+      showToast('Failed to export to CSV', 'error');
     }
   };
 
-  const handleExportNotion = async () => {
+  const handleExportToNotion = async () => {
     try {
-      const selected = results.filter(r => selectedResults.has(r.id));
-      await onExportNotion(selected);
-      showToast('Export vers Notion réussi !', 'success');
+      const response = await fetch(`${config.apiBaseUrl}/export-to-notion`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(Array.from(selectedResults).map(id => results.find(r => r.id === id))),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to export to Notion');
+      }
+      
+      showToast('Successfully exported to Notion!', 'success');
     } catch (error) {
-      showToast('Erreur lors de l\'export vers Notion', 'error');
+      console.error('Error exporting to Notion:', error);
+      showToast('Failed to export to Notion', 'error');
     }
   };
 
@@ -310,7 +354,7 @@ export const SearchForm: React.FC<SearchFormProps> = ({
               <div className="flex space-x-2">
                 <button
                   type="button"
-                  onClick={handleExportGoogleSheets}
+                  onClick={handleExportToGoogleSheets}
                   disabled={selectedResults.size === 0}
                   className={`bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-md transition-colors duration-200 ${
                     selectedResults.size === 0 ? 'opacity-50 cursor-not-allowed' : ''
@@ -320,7 +364,7 @@ export const SearchForm: React.FC<SearchFormProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={handleExportCsv}
+                  onClick={handleExportToCsv}
                   disabled={selectedResults.size === 0}
                   className={`bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 px-4 rounded-md transition-colors duration-200 ${
                     selectedResults.size === 0 ? 'opacity-50 cursor-not-allowed' : ''
@@ -330,7 +374,7 @@ export const SearchForm: React.FC<SearchFormProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={handleExportNotion}
+                  onClick={handleExportToNotion}
                   disabled={selectedResults.size === 0}
                   className={`bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-md transition-colors duration-200 ${
                     selectedResults.size === 0 ? 'opacity-50 cursor-not-allowed' : ''

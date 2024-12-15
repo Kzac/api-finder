@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import SearchForm from './components/SearchForm';
 import SearchResults from './components/SearchResults';
+import config from './config';
 
 interface Business {
   name: string;
@@ -45,18 +46,16 @@ function App() {
     radius: number, 
     coordinates?: [number, number] 
   }) => {
+    setLoading(true);
+    setError(null);
     setLastSearchParams({
       keyword: params.keyword,
       city: params.city,
       radius: params.radius.toString()
     });
 
-    setLoading(true);
-    setError(null);
-    setResults([]);
-
     try {
-      const response = await fetch('http://localhost:5001/search', {
+      const response = await fetch(`${config.apiBaseUrl}/search`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -78,6 +77,7 @@ function App() {
       setResults(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+      setResults([]);
     } finally {
       setLoading(false);
     }
@@ -88,7 +88,7 @@ function App() {
     
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5001/api/export-sheets', {
+      const response = await fetch(`${config.apiBaseUrl}/api/export-sheets`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -116,7 +116,7 @@ function App() {
     
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5001/api/export-csv', {
+      const response = await fetch(`${config.apiBaseUrl}/api/export-csv`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -154,7 +154,7 @@ function App() {
     
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5001/api/export-notion', {
+      const response = await fetch(`${config.apiBaseUrl}/api/export-notion`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -177,7 +177,7 @@ function App() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
-      <header className="fixed top-0 left-0 right-0 h-16 bg-white dark:bg-gray-800 shadow-lg z-[9999] transition-colors duration-300">
+      <header className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-lg z-[9999] transition-colors duration-300">
         <div className="h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <div className="flex items-center">
             <img 
